@@ -402,7 +402,7 @@ test("session-start.mjs: an empty briefing still gets the memory directive", asy
   try {
     const { stdout } = await runHook(
       "session-start.mjs",
-      JSON.stringify({ session_id: "empty1", cwd: __dirname }),
+      JSON.stringify({ hook_event_name: "SessionStart", session_id: "empty1", cwd: __dirname }),
       { MEMINI_BASE_URL: url, XDG_CACHE_HOME: freshCache() },
     );
     // Server reachable but the namespace has no memories: the block is replaced
@@ -4580,7 +4580,7 @@ test("stop.mjs: captures the last turn as episodic by default, dedupes, opts out
   writeFileSync(
     tp,
     [
-      JSON.stringify({ type: "user", message: { role: "user", content: "how do I run tests?" } }),
+      JSON.stringify({ type: "user", message: { role: "user", content: [{ type: "text", text: "<ide_selection>editor context</ide_selection>" }, { type: "image", source: {} }, { type: "text", text: "how do I run tests?" }] } }),
       JSON.stringify({ type: "assistant", message: { id: "msg_9", content: [{ type: "text", text: "run mise test" }] } }),
     ].join("\n") + "\n",
   );
@@ -4595,9 +4595,9 @@ test("stop.mjs: captures the last turn as episodic by default, dedupes, opts out
   );
   try {
     // Default: capture the turn once.
-    await runHook("stop.mjs", JSON.stringify({ session_id: "turn1", cwd: __dirname, transcript_path: tp }), { MEMINI_BASE_URL: url, XDG_CACHE_HOME: cache });
+    await runHook("stop.mjs", JSON.stringify({ hook_event_name: "Stop", session_id: "turn1", cwd: __dirname, transcript_path: tp }), { MEMINI_BASE_URL: url, XDG_CACHE_HOME: cache });
     // Second Stop on the same turn: dedup, no new capture.
-    await runHook("stop.mjs", JSON.stringify({ session_id: "turn1", cwd: __dirname, transcript_path: tp }), { MEMINI_BASE_URL: url, XDG_CACHE_HOME: cache });
+    await runHook("stop.mjs", JSON.stringify({ hook_event_name: "Stop", session_id: "turn1", cwd: __dirname, transcript_path: tp }), { MEMINI_BASE_URL: url, XDG_CACHE_HOME: cache });
     const turns = bodies.filter((b) => b?.metadata?.format === "turn");
     assert.equal(turns.length, 1, "the same turn must be captured at most once");
     assert.equal(turns[0].tier, "episodic");
@@ -4631,7 +4631,7 @@ test("stop.mjs: turn-capture dedup survives an auto-save nudge (save-state co-te
     const lines = [];
     for (let i = 0; i < userCount; i++) {
       const last = i === userCount - 1;
-      lines.push(JSON.stringify({ type: "user", message: { role: "user", content: `q${i}` } }));
+      lines.push(JSON.stringify({ type: "user", message: { role: "user", content: [{ type: "text", text: `q${i}` }] } }));
       lines.push(
         JSON.stringify({
           type: "assistant",
@@ -4662,7 +4662,7 @@ test("stop.mjs: turn-capture dedup survives an auto-save nudge (save-state co-te
   // min_events=0 makes the event-less fixture nudge at the interval (this test is
   // about the save-state spread across a nudge, not the activity gate).
   const env = { MEMINI_BASE_URL: url, XDG_CACHE_HOME: cache, MEMINI_AUTO_SAVE_INTERVAL: "2", MEMINI_AUTO_SAVE_MIN_EVENTS: "0" };
-  const payload = () => JSON.stringify({ session_id: "cot", cwd: __dirname, transcript_path: tp });
+  const payload = () => JSON.stringify({ hook_event_name: "Stop", session_id: "cot", cwd: __dirname, transcript_path: tp });
   try {
     // Run 0: 2 turns, tail msgA. First sight baselines auto-save (no block) and captures msgA.
     writeTail(2, "msgA", "answer A");
@@ -7659,4 +7659,52 @@ test("session-start.mjs: malformed handoff pointers are skipped, never crash the
   } finally {
     await close();
   }
+});
+
+
+test("hostKind: Claude PascalCase and Cursor camelCase events stay distinct", async () => {
+  const { hostKind } = await import("./_shared.mjs");
+  for (const event of ["SessionStart", "Stop", "UserPromptSubmit", "PreToolUse"]) {
+    assert.equal(hostKind({ hook_event_name: event }, {}), "claude");
+    assert.equal(hostKind({ hook_event_name: event }, { CURSOR_VERSION: "stale" }), "claude");
+  }
+  for (const event of ["sessionStart", "stop", "beforeSubmitPrompt"]) {
+    assert.equal(hostKind({ hook_event_name: event }, {}), "cursor");
+  }
+  assert.equal(hostKind({ cursor_version: "1" }, {}), "cursor");
+  assert.equal(hostKind({}, { CURSOR_VERSION: "1" }), "cursor");
+  assert.equal(hostKind({ hook_event_name: "Stop" }, { PLUGIN_ROOT: "/plugin" }), "codex");
+  assert.equal(hostKind({ hook_event_name: 42 }, {}), "claude");
+});
+
+test("VS Code user blocks: extract typed text and count only real turns", async () => {
+  const { userMessageText, isRealUserMessage, extractLastTurn, scanTranscriptStats } = await import("./_shared.mjs");
+  const content = [
+    null,
+    { type: "text", text: " <ide_selection>selection</ide_selection>" },
+    { type: "text", text: "<system-reminder>context</system-reminder>" },
+    { type: "image", source: {} },
+    { type: "text", text: "first question" },
+    { type: "text", text: "second line" },
+  ];
+  assert.equal(userMessageText(content), "first question\nsecond line");
+  assert.equal(isRealUserMessage(content), true);
+  const noise = [
+    [], null, {}, "   ",
+    [{ type: "image" }],
+    [{ type: "text", text: "<ide_opened_file>file</ide_opened_file>" }],
+    [{ type: "text", text: "<command-name>/foo</command-name>" }],
+    [{ type: "text", text: "<memini-context>recall</memini-context>" }],
+    [{ type: "text", text: "text from a tool" }, { type: "tool_result" }],
+  ];
+  for (const value of noise) assert.equal(isRealUserMessage(value), false);
+  const transcript = [
+    { type: "user", message: { content } },
+    ...noise.map((value) => ({ type: "user", message: { content: value } })),
+    { type: "user", isMeta: true, message: { content } },
+    { type: "user", isSidechain: true, message: { content } },
+    { type: "assistant", message: { id: "reply", content: [{ type: "text", text: "answer" }] } },
+  ].map((row) => JSON.stringify(row)).join("\n");
+  assert.deepEqual(extractLastTurn(transcript), { userText: "first question\nsecond line", assistantText: "answer", assistantId: "reply" });
+  assert.deepEqual(scanTranscriptStats(transcript), { userMessages: 1, memorySaves: 0 });
 });

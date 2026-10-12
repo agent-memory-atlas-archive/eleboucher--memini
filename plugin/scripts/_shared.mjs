@@ -1278,13 +1278,14 @@ export function promptHint(prompt) {
 /**
  * Which harness invoked this hook: "claude" (default), "codex" (PLUGIN_ROOT
  * set), or "cursor" (CURSOR_VERSION env, or a payload carrying Cursor's
- * cursor_version / hook_event_name markers). Payload markers beat the env
+ * cursor_version / camelCase hook_event_name markers). Payload markers beat the env
  * fallback so a stray CURSOR_VERSION export can't flip another host's payload.
  */
 export function hostKind(payload, env = process.env) {
   if (env.PLUGIN_ROOT) return "codex";
-  if (payload && typeof payload === "object" && (payload.cursor_version != null || payload.hook_event_name != null))
+  if (payload && typeof payload === "object" && (payload.cursor_version != null || (typeof payload.hook_event_name === "string" && /^[a-z]/.test(payload.hook_event_name))))
     return "cursor";
+  if (typeof payload?.hook_event_name === "string" && /^[A-Z]/.test(payload.hook_event_name)) return "claude";
   if (env.CURSOR_VERSION) return "cursor";
   return "claude";
 }
@@ -1434,14 +1435,28 @@ export function extractAssistantText(transcript) {
   return out;
 }
 
+/** Extract typed user text from CLI strings or VS Code content blocks. */
+export function userMessageText(content) {
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
+  // Tool results can carry text alongside their result blocks; none is a turn.
+  if (content.some((b) => b?.type === "tool_result")) return "";
+  return content
+    .filter((b) => b?.type === "text" && typeof b.text === "string")
+    .map((b) => b.text)
+    .filter((text) => !/^\s*<(ide_|system-reminder)/.test(text))
+    .join("\n");
+}
+
 /**
  * Report whether a transcript entry's `message.content` is a real user turn:
- * a string (tool_result entries are arrays) that isn't slash-command or
+ * string or text-block content that isn't slash-command or
  * local-command scaffolding. Shared by the turn extractor and the auto-save
  * message counter so both skip the same noise.
  */
 export function isRealUserMessage(content) {
-  if (typeof content !== "string") return false; // arrays are tool_results, not user turns
+  content = userMessageText(content);
+  if (!content.trim()) return false;
   // Skipped: slash-command / local-command scaffolding, memini's own injected
   // recall blocks (<memini-context>/<memini-pretool> — capturing one would echo
   // recalled memories back into memory), hook-injected system reminders, and
@@ -1453,7 +1468,7 @@ export function isRealUserMessage(content) {
 /**
  * Extract the latest complete user→assistant turn from a Claude Code transcript
  * (JSONL string). Returns { userText, assistantText, assistantId } — the last
- * real user message (string content only; tool_result arrays and slash/local
+ * real user message (strings or text blocks; tool_result arrays and slash/local
  * command noise are skipped) and the final assistant prose, plus the assistant
  * message id for dedup. Fields are "" when absent. Never throws.
  *
@@ -1472,7 +1487,7 @@ export function extractLastTurn(transcript) {
     if (r.type === "user") {
       const c = r.message?.content;
       if (!isRealUserMessage(c)) continue;
-      userText = c.trim();
+      userText = userMessageText(c).trim();
     } else if (r.type === "assistant") {
       const c = r.message?.content;
       let text = "";
