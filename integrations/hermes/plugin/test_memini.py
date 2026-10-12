@@ -604,6 +604,8 @@ class RecallShapingTest(unittest.TestCase):
         p = make_provider(stub)
         out = p.prefetch("q")
         self.assertEqual(bodies[0]["min_rank_score"], 0.5)
+        self.assertEqual(bodies[0]["source"], "prompt")
+        self.assertEqual(bodies[1]["source"], "prompt")
         self.assertNotIn("min_rank_score", bodies[1])
         self.assertNotIn("min_score", bodies[1])
         self.assertIn("keep me", out)

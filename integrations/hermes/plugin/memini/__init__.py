@@ -1267,6 +1267,7 @@ class MeminiMemoryProvider(MemoryProvider):
         if not self._recall_enabled or not query.strip():
             return ""
         body = self._recall_body(query)
+        body["source"] = "prompt"
         result = self._call("/v1/search", body)
         # Newer-than-server optional fields (min_rank_score, exclude_ids): an
         # older server 400s the whole request on the unknown field, and _call

@@ -440,3 +440,52 @@ func TestCrossEncoderOversizeDocNeverSendsEmptyBatch(t *testing.T) {
 		t.Fatalf("want both candidates back, got %v", ids)
 	}
 }
+
+func TestCrossEncoderSendsCappedQuery(t *testing.T) {
+	for _, method := range []string{"rerank", "scores"} {
+		for _, tc := range []struct {
+			name               string
+			queryCap, batchCap int
+			want               string
+		}{
+			{"dedicated", 3, 20000, "日本語"},
+			{"batch", 0, 41, "日本語"},
+			{"disabled", 0, 0, "日本語の質問"},
+			{"short", 20, 20000, "日本語の質問"},
+		} {
+			t.Run(method+"/"+tc.name, func(t *testing.T) {
+				calls := 0
+				srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					calls++
+					var req rerankRequest
+					if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+						t.Error(err)
+					}
+					if req.Query != tc.want {
+						t.Errorf("query = %q, want %q", req.Query, tc.want)
+					}
+					results := make([]rerankRes, len(req.Documents))
+					for i := range results {
+						results[i] = rerankRes{Index: i, RelevanceScore: 0.9}
+					}
+					_ = json.NewEncoder(w).Encode(map[string]any{"results": results})
+				}))
+				defer srv.Close()
+				ce, _ := New(Config{BaseURL: srv.URL, MaxQueryChars: tc.queryCap, MaxBatchChars: tc.batchCap})
+				cands := []Candidate{{ID: "a", Content: "doc"}, {ID: "b", Content: "doc"}}
+				var err error
+				if method == "rerank" {
+					_, err = ce.Rerank(context.Background(), "日本語の質問", cands)
+				} else {
+					_, err = ce.Scores(context.Background(), "日本語の質問", cands)
+				}
+				if err != nil {
+					t.Fatal(err)
+				}
+				if calls == 0 {
+					t.Fatal("no request sent")
+				}
+			})
+		}
+	}
+}

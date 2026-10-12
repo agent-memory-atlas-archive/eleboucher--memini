@@ -501,6 +501,7 @@ func buildReranker(cfg *config.Config, chat llm.Client, log *slog.Logger, onInFl
 		Model:         cfg.RerankModel,
 		APIKey:        cfg.RerankAPIKey,
 		MaxDocChars:   cfg.RerankMaxDocChars,
+		MaxQueryChars: cfg.RerankMaxQueryChars,
 		MaxBatchChars: cfg.RerankMaxBatchChars,
 		MinScore:      cfg.RerankMinScore,
 	})

@@ -40,6 +40,7 @@ const (
 	DefaultEmbedMaxBatch       = 20
 	DefaultEmbedMaxBatchChars  = 24000
 	DefaultEmbedMaxItemChars   = 8000
+	DefaultRerankMaxQueryChars = 512
 	DefaultRerankMaxDocChars   = 2048
 	DefaultRerankMaxBatchChars = 6000
 
@@ -402,6 +403,10 @@ type Config struct {
 	// rerank.CrossEncoder.Rerank), which is far more likely to blow RerankTimeout
 	// than a large body is to trouble the server. 0 disables proactive batching.
 	RerankMaxBatchChars int `env:"MEMINI_RERANK_MAX_BATCH_CHARS" envDefault:"6000"`
+	// RerankMaxQueryChars truncates the query sent to the cross-encoder to this
+	// many runes, limiting the query cost repeated for every candidate. Retrieval
+	// still uses the full query. 0 disables this cap; the batch cap still applies.
+	RerankMaxQueryChars int `env:"MEMINI_RERANK_MAX_QUERY_CHARS" envDefault:"512"`
 	// RerankMaxDocChars truncates each document sent to the cross-encoder to
 	// this many runes, bounding a single (query, document) pair against the
 	// model's context. Raise it toward your reranker's context window if your
@@ -1254,6 +1259,7 @@ func (c *Config) validate() error {
 	}{
 		{"MEMINI_EMBED_MAX_ITEM_CHARS", c.EmbedMaxItemChars},
 		{"MEMINI_RERANK_MAX_DOC_CHARS", c.RerankMaxDocChars},
+		{"MEMINI_RERANK_MAX_QUERY_CHARS", c.RerankMaxQueryChars},
 		{"MEMINI_RERANK_LLM_MAX_DOC_CHARS", c.RerankLLMMaxDocChars},
 		{"MEMINI_CLASSIFY_MAX_CHARS", c.ClassifyMaxChars},
 		{"MEMINI_PROMOTE_WHOLE_MAX_CHARS", c.PromoteWholeMaxChars},

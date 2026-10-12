@@ -47,10 +47,12 @@ type Config struct {
 	// leaves MaxBatchChars in force, not unlimited. Truncation is off only when
 	// both are 0. See Rerank.
 	MaxDocChars int
+	// MaxQueryChars truncates the rerank query in runes. 0 disables this cap.
+	MaxQueryChars int
 	// MaxBatchChars caps the total characters across query and documents in
-	// a single /rerank request. Set just below the model's effective context
-	// in characters (≈ n_ctx × chars-per-token × (1 − template reserve);
-	// ~4000 for a 1024-token model). 0 disables proactive batching.
+	// a single /rerank request. Each query/document pair is scored separately;
+	// use MaxQueryChars and MaxDocChars to bound per-pair cost.
+	// 0 disables proactive batching.
 	MaxBatchChars int
 	// MinScore drops candidates whose relevance score falls below it (a
 	// per-candidate gate over the whole pool). Cross-encoders emit calibrated
@@ -69,6 +71,7 @@ type CrossEncoder struct {
 	url           string
 	model         string
 	apiKey        string
+	maxQueryChars int
 	maxDocChars   int
 	maxBatchChars int
 	minScore      float64
@@ -87,6 +90,7 @@ func New(cfg Config) (*CrossEncoder, error) {
 		url:           strings.TrimRight(cfg.BaseURL, "/") + "/rerank",
 		model:         cfg.Model,
 		apiKey:        cfg.APIKey,
+		maxQueryChars: cfg.MaxQueryChars,
 		maxDocChars:   cfg.MaxDocChars,
 		maxBatchChars: cfg.MaxBatchChars,
 		minScore:      cfg.MinScore,
@@ -134,6 +138,7 @@ func (c *CrossEncoder) Rerank(ctx context.Context, query string, candidates []Ca
 	if len(candidates) == 0 || (len(candidates) == 1 && c.minScore <= 0) {
 		return idsOf(candidates), nil
 	}
+	query = c.prepareQuery(query)
 	maxPerDoc := c.maxDocChars
 	if c.maxBatchChars > 0 && (maxPerDoc == 0 || maxPerDoc > c.maxBatchChars) {
 		maxPerDoc = c.maxBatchChars
@@ -193,6 +198,7 @@ func (c *CrossEncoder) Scores(ctx context.Context, query string, candidates []Ca
 	if len(candidates) == 0 {
 		return out, nil
 	}
+	query = c.prepareQuery(query)
 	maxPerDoc := c.maxDocChars
 	if c.maxBatchChars > 0 && (maxPerDoc == 0 || maxPerDoc > c.maxBatchChars) {
 		maxPerDoc = c.maxBatchChars
@@ -211,6 +217,18 @@ func (c *CrossEncoder) Scores(ctx context.Context, query string, candidates []Ca
 	return out, nil
 }
 
+// prepareQuery applies caps before both batching and sending the request.
+func (c *CrossEncoder) prepareQuery(query string) string {
+	query = truncateRunes(query, c.maxQueryChars)
+	if c.maxBatchChars > 0 {
+		maxQuery := c.maxBatchChars - 38 - len(c.model)
+		if maxQuery > 0 {
+			query = truncateRunes(query, maxQuery)
+		}
+	}
+	return query
+}
+
 type batchSpan struct{ start, end int }
 
 func (c *CrossEncoder) splitBatches(docs []string, query string, charCap int) []batchSpan {
@@ -220,14 +238,7 @@ func (c *CrossEncoder) splitBatches(docs []string, query string, charCap int) []
 	envelopeOverhead := 38 + len(c.model)
 	budget := charCap - utf8.RuneCountInString(query) - envelopeOverhead
 	if budget <= 0 {
-		maxQuery := charCap - envelopeOverhead
-		if maxQuery > 0 {
-			query = truncateRunes(query, maxQuery)
-			budget = charCap - utf8.RuneCountInString(query) - envelopeOverhead
-		}
-		if budget <= 0 {
-			return []batchSpan{{start: 0, end: len(docs)}}
-		}
+		return []batchSpan{{start: 0, end: len(docs)}}
 	}
 	var out []batchSpan
 	start := 0

@@ -82,6 +82,9 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.ConsolidateMinScore != 0.3 {
 		t.Errorf("ConsolidateMinScore = %v, want 0.3", cfg.ConsolidateMinScore)
 	}
+	if cfg.RerankMaxQueryChars != config.DefaultRerankMaxQueryChars {
+		t.Errorf("RerankMaxQueryChars = %d, want %d", cfg.RerankMaxQueryChars, config.DefaultRerankMaxQueryChars)
+	}
 	if cfg.RerankMaxBatchChars != 6000 {
 		t.Errorf("RerankMaxBatchChars = %d, want 6000", cfg.RerankMaxBatchChars)
 	}
@@ -532,7 +535,7 @@ var meminiEnvKeys = []string{
 	"MEMINI_LLM_BASE_URL", "MEMINI_LLM_API_KEY", "MEMINI_LLM_MODEL",
 	"MEMINI_RERANK", "MEMINI_RERANK_MODEL", "MEMINI_RERANK_API_KEY",
 	"MEMINI_RERANK_TIMEOUT", "MEMINI_RERANK_MAX_BATCH_CHARS", "MEMINI_RERANK_PROMPT",
-	"MEMINI_EMBED_MAX_ITEM_CHARS", "MEMINI_RERANK_MAX_DOC_CHARS", "MEMINI_RERANK_LLM_MAX_DOC_CHARS",
+	"MEMINI_EMBED_MAX_ITEM_CHARS", "MEMINI_RERANK_MAX_DOC_CHARS", "MEMINI_RERANK_MAX_QUERY_CHARS", "MEMINI_RERANK_LLM_MAX_DOC_CHARS",
 	"MEMINI_CLASSIFY_MAX_CHARS", "MEMINI_PROMOTE_WHOLE_MAX_CHARS",
 	"MEMINI_CHUNK_EMBED", "MEMINI_CHUNK_SIZE", "MEMINI_CHUNK_OVERLAP",
 	"MEMINI_CHUNK_MIN_CONTENT", "MEMINI_CHUNK_MAX_PER_MEMORY", "MEMINI_CHUNK_SCORE_WEIGHT",
@@ -608,6 +611,7 @@ func TestUndeprecatedVarsAreLive(t *testing.T) {
 		got  func(*config.Config) int
 	}{
 		{"MEMINI_EMBED_MAX_ITEM_CHARS", 12345, func(c *config.Config) int { return c.EmbedMaxItemChars }},
+		{"MEMINI_RERANK_MAX_QUERY_CHARS", 512, func(c *config.Config) int { return c.RerankMaxQueryChars }},
 		{"MEMINI_RERANK_MAX_DOC_CHARS", 4096, func(c *config.Config) int { return c.RerankMaxDocChars }},
 	} {
 		t.Run(tc.env, func(t *testing.T) {

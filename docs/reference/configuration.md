@@ -71,6 +71,7 @@ server deployment. Treat the rest as tuning you reach for when you have a reason
 | [`MEMINI_RERANK_TIMEOUT`](#memini_rerank_timeout) | `10s` | [Reranking](#reranking) |
 | [`MEMINI_RERANK_MAX_BATCH_CHARS`](#memini_rerank_max_batch_chars) | `6000` | [Reranking](#reranking) |
 | [`MEMINI_RERANK_MAX_DOC_CHARS`](#memini_rerank_max_doc_chars) | `2048` | [Reranking](#reranking) |
+| [`MEMINI_RERANK_MAX_QUERY_CHARS`](#memini_rerank_max_query_chars) | `512` | [Reranking](#reranking) |
 | [`MEMINI_RERANK_LLM_MAX_DOC_CHARS`](#memini_rerank_llm_max_doc_chars) | `300` | [Reranking](#reranking) |
 | [`MEMINI_RERANK_MAX_CONCURRENCY`](#memini_rerank_max_concurrency) | `0` | [Reranking](#reranking) |
 | [`MEMINI_RERANK_PROMPT`](#memini_rerank_prompt) | `true` | [Reranking](#reranking) |
@@ -426,6 +427,12 @@ int, default `2048`. Set by `Config.RerankMaxDocChars`.
 `MEMINI_RERANK_MAX_DOC_CHARS` truncates each document sent to the cross-encoder to this many runes, bounding a single (query, document) pair against the model's context. Raise it toward your reranker's context window if your memories are long and the tail carries the signal.
 
 `MEMINI_RERANK_MAX_BATCH_CHARS` overrides it whenever it is smaller, so the effective per-document cap is the lower of the two. That includes 0: 0 here means "no cap of my own", which leaves `MEMINI_RERANK_MAX_BATCH_CHARS` (6000 by default) as the cap — NOT unlimited. Truncation is off only when both are 0.
+
+### `MEMINI_RERANK_MAX_QUERY_CHARS`
+
+int, default `512`. Set by `Config.RerankMaxQueryChars`.
+
+`MEMINI_RERANK_MAX_QUERY_CHARS` truncates the query sent to the cross-encoder to this many runes, limiting the query cost repeated for every candidate. Retrieval still uses the full query. 0 disables this cap; the batch cap still applies.
 
 ### `MEMINI_RERANK_LLM_MAX_DOC_CHARS`
 
