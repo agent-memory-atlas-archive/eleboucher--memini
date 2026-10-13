@@ -331,7 +331,11 @@ type Config struct {
 	// and LLM reranking. DistillModel overrides it for distillation.
 	LLMModel string `env:"MEMINI_LLM_MODEL" envDefault:"gpt-4o-mini"`
 	// DistillModel overrides the chat model for distillation (write-time and
-	// promotion). Empty uses LLMModel; all other LLM settings are shared.
+	// promotion). Unset or empty uses LLMModel. Shares the LLM endpoint, API
+	// key, API backend, headers, extra body, and token budget. This override
+	// alone does not enable the LLM pipeline. For a routing proxy such as
+	// LiteLLM, use LLMModel for the larger answer model and DistillModel for
+	// the smaller distillation model.
 	DistillModel string `env:"MEMINI_DISTILL_MODEL"`
 	// LLMAPI selects the chat backend: "openai" (default) or "anthropic".
 	LLMAPI string `env:"MEMINI_LLM_API" envDefault:"openai"`
