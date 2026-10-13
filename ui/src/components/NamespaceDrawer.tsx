@@ -18,7 +18,7 @@ interface Props {
 // namespace (move) or regroup it by metadata (split). Both preview with a
 // dry-run first, then apply; the server backs both with Store.Reassign.
 export function NamespaceDrawer({ name, onClose, initialMoveTo }: Props) {
-  const drawerRef = useRef<HTMLElement>(null)
+  const drawerRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export function NamespaceDrawer({ name, onClose, initialMoveTo }: Props) {
   return createPortal(
     <>
       <div class="scrim" onClick={onClose} />
-      <aside class="drawer" role="dialog" aria-modal="true" aria-label={`Manage ${name}`} ref={drawerRef}>
+      <div class="drawer" role="dialog" aria-modal="true" aria-label={`Manage ${name}`} ref={drawerRef}>
         <div class="drawer-head">
           <span class="chip">{name}</span>
           <span class="grow" />
@@ -49,7 +49,7 @@ export function NamespaceDrawer({ name, onClose, initialMoveTo }: Props) {
           <MoveSection name={name} onDone={onClose} initialTo={initialMoveTo} />
           <SplitSection name={name} onDone={onClose} />
         </div>
-      </aside>
+      </div>
     </>,
     document.body,
   )

@@ -1,7 +1,7 @@
 /** Minimal stroked icon set (Lucide-style geometry), sized via CSS. */
 import type { JSX } from 'preact'
 
-type P = JSX.SVGAttributes<SVGSVGElement>
+type P = JSX.IntrinsicElements['svg']
 
 const base = (children: JSX.Element | JSX.Element[]) => (props: P) => (
   <svg

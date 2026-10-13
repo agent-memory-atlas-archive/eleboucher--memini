@@ -42,7 +42,7 @@ export function MemoryDrawer({ memory: m, onClose, wide, from, fromNs }: Props) 
   const [reassignTo, setReassignTo] = useState('')
   const [reassigning, setReassigning] = useState(false)
 
-  const drawerRef = useRef<HTMLElement>(null)
+  const drawerRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
 
   const conf = m.confidence != null ? confidenceState(m.confidence) : null
@@ -136,7 +136,7 @@ export function MemoryDrawer({ memory: m, onClose, wide, from, fromNs }: Props) 
   return createPortal(
     <>
       <div class="scrim" onClick={onClose} />
-      <aside class={`drawer${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label="Memory detail" ref={drawerRef}>
+      <div class={`drawer${wide ? ' wide' : ''}`} role="dialog" aria-modal="true" aria-label="Memory detail" ref={drawerRef}>
         <div class="drawer-head">
           <TierBadge tier={m.tier} />
           <MemoryTypeBadge type={memoryType(m)} />
@@ -306,7 +306,7 @@ export function MemoryDrawer({ memory: m, onClose, wide, from, fromNs }: Props) 
             </>
           )}
         </div>
-      </aside>
+      </div>
     </>,
     document.body,
   )

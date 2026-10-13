@@ -55,7 +55,7 @@ const NAV: {
   path: string
   label: string
   title: string
-  Icon: (p: JSX.SVGAttributes<SVGSVGElement>) => JSX.Element
+  Icon: (p: JSX.IntrinsicElements['svg']) => JSX.Element
   component: AnyComponent
 }[] = [
   { path: '/namespaces', label: 'Namespaces', title: 'Namespaces', Icon: IconNamespaces, component: Namespaces },
