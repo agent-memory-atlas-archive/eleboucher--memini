@@ -306,16 +306,21 @@ func buildDistiller(on bool, mode bench.IngestMode) (*bench.CountingDistiller, l
 		return nil, nil, fmt.Errorf("bench: -distill requires -ingest=write")
 	}
 	client, err := llm.New(llm.API(os.Getenv("MEMINI_LLM_API")), llm.Config{
-		BaseURL: os.Getenv("MEMINI_LLM_BASE_URL"),
-		APIKey:  os.Getenv("MEMINI_LLM_API_KEY"),
-		Model:   os.Getenv("MEMINI_LLM_MODEL"),
+		BaseURL:      os.Getenv("MEMINI_LLM_BASE_URL"),
+		APIKey:       os.Getenv("MEMINI_LLM_API_KEY"),
+		Model:        os.Getenv("MEMINI_LLM_MODEL"),
+		DistillModel: os.Getenv("MEMINI_DISTILL_MODEL"),
 	})
 	if err != nil {
 		return nil, nil, err
 	}
 	counting := bench.NewCountingDistiller(client)
+	model := os.Getenv("MEMINI_DISTILL_MODEL")
+	if model == "" {
+		model = os.Getenv("MEMINI_LLM_MODEL")
+	}
 	fmt.Fprintf(os.Stderr, "distill-on-write: model %s via %s\n",
-		os.Getenv("MEMINI_LLM_MODEL"), os.Getenv("MEMINI_LLM_BASE_URL"))
+		model, os.Getenv("MEMINI_LLM_BASE_URL"))
 	return counting, counting, nil
 }
 

@@ -17,10 +17,11 @@ import (
 // marked for prompt caching, so repeated consolidation calls reuse it at the
 // cache-read rate.
 type AnthropicClient struct {
-	client    anthropic.Client
-	extra     []option.RequestOption
-	model     string
-	maxTokens int64
+	client       anthropic.Client
+	extra        []option.RequestOption
+	model        string
+	distillModel string
+	maxTokens    int64
 }
 
 // NewAnthropic builds an Anthropic Messages client. Model is required; BaseURL
@@ -46,10 +47,11 @@ func NewAnthropic(cfg Config) (*AnthropicClient, error) {
 		extra = append(extra, option.WithHeader(key, value))
 	}
 	return &AnthropicClient{
-		client:    anthropic.NewClient(opts...),
-		extra:     extra,
-		model:     cfg.Model,
-		maxTokens: maxTokensOr(cfg.MaxTokens),
+		client:       anthropic.NewClient(opts...),
+		extra:        extra,
+		model:        cfg.Model,
+		distillModel: cfg.DistillModel,
+		maxTokens:    maxTokensOr(cfg.MaxTokens),
 	}, nil
 }
 
@@ -68,11 +70,16 @@ func (c *AnthropicClient) Consolidate(ctx context.Context, in Input) (Decision, 
 
 // Distill compresses episodic memories into durable semantic facts.
 func (c *AnthropicClient) Distill(ctx context.Context, in DistillInput) ([]Fact, error) {
+	// Use a local copy so concurrent answer/consolidation calls keep Model.
+	distiller := *c
+	if c.distillModel != "" {
+		distiller.model = c.distillModel
+	}
 	payload, err := json.Marshal(in)
 	if err != nil {
 		return nil, err
 	}
-	content, err := c.chat(ctx, distillPrompt, string(payload))
+	content, err := distiller.chat(ctx, distillPrompt, string(payload))
 	if err != nil {
 		return nil, err
 	}

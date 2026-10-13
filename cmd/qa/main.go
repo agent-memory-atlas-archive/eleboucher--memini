@@ -120,8 +120,9 @@ func run() error {
 	}
 	chat, err := llm.New(llm.API(os.Getenv("MEMINI_LLM_API")), llm.Config{
 		BaseURL: os.Getenv("MEMINI_LLM_BASE_URL"), APIKey: os.Getenv("MEMINI_LLM_API_KEY"),
-		Model:      os.Getenv("MEMINI_LLM_MODEL"),
-		HTTPClient: qaHTTPWithHeaders(),
+		Model:        os.Getenv("MEMINI_LLM_MODEL"),
+		DistillModel: os.Getenv("MEMINI_DISTILL_MODEL"),
+		HTTPClient:   qaHTTPWithHeaders(),
 	})
 	if err != nil {
 		return err

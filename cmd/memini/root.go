@@ -292,7 +292,7 @@ func buildServiceStack(
 			return nil, nil, nil, nil, nil, err
 		}
 		client, err := llm.New(llm.API(cfg.LLMAPI), llm.Config{
-			BaseURL: cfg.LLMBaseURL, APIKey: cfg.LLMAPIKey, Model: cfg.LLMModel,
+			BaseURL: cfg.LLMBaseURL, APIKey: cfg.LLMAPIKey, Model: cfg.LLMModel, DistillModel: cfg.DistillModel,
 			MaxTokens: cfg.LLMMaxTokens, ExtraBody: extraBody, ExtraHeaders: extraHeaders,
 		})
 		if err != nil {

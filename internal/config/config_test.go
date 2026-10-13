@@ -532,7 +532,7 @@ var meminiEnvKeys = []string{
 	"MEMINI_EMBED_BASE_URL", "MEMINI_EMBED_API_KEY", "MEMINI_EMBED_MODEL", "MEMINI_EMBED_MODEL_ALIASES", "MEMINI_EMBED_DIMS",
 	"MEMINI_EMBED_QUERY_PREFIX",
 	"MEMINI_WRITE_DEDUP_SCORE", "MEMINI_WRITE_DEDUP_ACTION",
-	"MEMINI_LLM_BASE_URL", "MEMINI_LLM_API_KEY", "MEMINI_LLM_MODEL",
+	"MEMINI_LLM_BASE_URL", "MEMINI_LLM_API_KEY", "MEMINI_LLM_MODEL", "MEMINI_DISTILL_MODEL",
 	"MEMINI_RERANK", "MEMINI_RERANK_MODEL", "MEMINI_RERANK_API_KEY",
 	"MEMINI_RERANK_TIMEOUT", "MEMINI_RERANK_MAX_BATCH_CHARS", "MEMINI_RERANK_PROMPT",
 	"MEMINI_EMBED_MAX_ITEM_CHARS", "MEMINI_RERANK_MAX_DOC_CHARS", "MEMINI_RERANK_MAX_QUERY_CHARS", "MEMINI_RERANK_LLM_MAX_DOC_CHARS",
@@ -917,5 +917,21 @@ func TestLLMExtraHeadersMap(t *testing.T) {
 	}
 	if m["x-opencode-session"] != "memini" || m["x-tenant"] != "lab" || len(m) != 2 {
 		t.Fatalf("valid object parsed wrong: %v", m)
+	}
+}
+
+func TestDistillModel(t *testing.T) {
+	for _, model := range []string{"", "small-model"} {
+		t.Run(model, func(t *testing.T) {
+			clearMeminiEnv(t)
+			t.Setenv("MEMINI_DISTILL_MODEL", model)
+			cfg, err := config.Load()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if cfg.DistillModel != model {
+				t.Fatalf("DistillModel = %q, want %q", cfg.DistillModel, model)
+			}
+		})
 	}
 }

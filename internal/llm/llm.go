@@ -151,6 +151,8 @@ type Config struct {
 	BaseURL string // OpenAI: e.g. https://host/v1 ; Anthropic: e.g. https://api.minimax.io/anthropic
 	APIKey  string
 	Model   string
+	// DistillModel overrides Model for Distill only. Empty uses Model.
+	DistillModel string
 	// MaxTokens caps the completion length (defaults to defaultMaxTokens). A
 	// budget is required for reasoning models, which otherwise spend the server
 	// default on hidden reasoning and return empty content.

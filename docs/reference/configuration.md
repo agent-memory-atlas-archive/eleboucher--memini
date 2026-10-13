@@ -59,6 +59,7 @@ server deployment. Treat the rest as tuning you reach for when you have a reason
 | [`MEMINI_LLM_BASE_URL`](#memini_llm_base_url) | none | [LLM (optional)](#llm-optional) |
 | [`MEMINI_LLM_API_KEY`](#memini_llm_api_key) | none | [LLM (optional)](#llm-optional) |
 | [`MEMINI_LLM_MODEL`](#memini_llm_model) | `gpt-4o-mini` | [LLM (optional)](#llm-optional) |
+| [`MEMINI_DISTILL_MODEL`](#memini_distill_model) | `MEMINI_LLM_MODEL` | [LLM (optional)](#llm-optional) |
 | [`MEMINI_LLM_API`](#memini_llm_api) | `openai` | [LLM (optional)](#llm-optional) |
 | [`MEMINI_LLM_MAX_TOKENS`](#memini_llm_max_tokens) | `0` | [LLM (optional)](#llm-optional) |
 | [`MEMINI_LLM_EXTRA_BODY`](#memini_llm_extra_body) | none | [LLM (optional)](#llm-optional) |
@@ -346,7 +347,15 @@ string, default none. Set by `Config.LLMAPIKey`.
 
 string, default `gpt-4o-mini`. Set by `Config.LLMModel`.
 
-`MEMINI_LLM_MODEL` is the chat model used for consolidation, distillation, answering and LLM reranking.
+`MEMINI_LLM_MODEL` is the default chat model used for consolidation, distillation, answering and LLM reranking. `MEMINI_DISTILL_MODEL` can override it for distillation.
+
+### `MEMINI_DISTILL_MODEL`
+
+string, default none (falls back to `MEMINI_LLM_MODEL`). Set by `Config.DistillModel`.
+
+Overrides the model for write-time distillation (including session batches) and promotion. Unset or empty keeps the default chat model. Shares `MEMINI_LLM_BASE_URL`, API key, API backend, headers, extra body, and token budget. An override alone does not enable the LLM pipeline.
+
+For a routing proxy such as LiteLLM, set `MEMINI_LLM_MODEL=large-model` and `MEMINI_DISTILL_MODEL=small-model` to use the smaller model for distillation while answers and other chat tasks use the larger one.
 
 ### `MEMINI_LLM_API`
 

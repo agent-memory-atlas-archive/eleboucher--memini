@@ -328,8 +328,11 @@ type Config struct {
 	// Optional.
 	LLMAPIKey string `env:"MEMINI_LLM_API_KEY"`
 	// LLMModel is the chat model used for consolidation, distillation, answering
-	// and LLM reranking.
+	// and LLM reranking. DistillModel overrides it for distillation.
 	LLMModel string `env:"MEMINI_LLM_MODEL" envDefault:"gpt-4o-mini"`
+	// DistillModel overrides the chat model for distillation (write-time and
+	// promotion). Empty uses LLMModel; all other LLM settings are shared.
+	DistillModel string `env:"MEMINI_DISTILL_MODEL"`
 	// LLMAPI selects the chat backend: "openai" (default) or "anthropic".
 	LLMAPI string `env:"MEMINI_LLM_API" envDefault:"openai"`
 	// LLMMaxTokens caps the completion length of every chat call. 0 (the

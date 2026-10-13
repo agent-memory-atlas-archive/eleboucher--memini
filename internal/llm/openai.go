@@ -15,10 +15,11 @@ import (
 // OpenAIClient is a Client backed by an OpenAI-compatible /chat/completions
 // endpoint.
 type OpenAIClient struct {
-	client    openai.Client
-	model     string
-	maxTokens int64
-	extra     []option.RequestOption
+	client       openai.Client
+	model        string
+	distillModel string
+	maxTokens    int64
+	extra        []option.RequestOption
 }
 
 // NewOpenAI builds a chat client. BaseURL and Model are required.
@@ -43,10 +44,11 @@ func NewOpenAI(cfg Config) (*OpenAIClient, error) {
 		extra = append(extra, option.WithHeader(key, value))
 	}
 	return &OpenAIClient{
-		client:    openai.NewClient(opts...),
-		model:     cfg.Model,
-		maxTokens: maxTokensOr(cfg.MaxTokens),
-		extra:     extra,
+		client:       openai.NewClient(opts...),
+		model:        cfg.Model,
+		distillModel: cfg.DistillModel,
+		maxTokens:    maxTokensOr(cfg.MaxTokens),
+		extra:        extra,
 	}, nil
 }
 
@@ -65,11 +67,16 @@ func (c *OpenAIClient) Consolidate(ctx context.Context, in Input) (Decision, err
 
 // Distill compresses episodic memories into durable semantic facts.
 func (c *OpenAIClient) Distill(ctx context.Context, in DistillInput) ([]Fact, error) {
+	// Use a local copy so concurrent answer/consolidation calls keep Model.
+	distiller := *c
+	if c.distillModel != "" {
+		distiller.model = c.distillModel
+	}
 	payload, err := json.Marshal(in)
 	if err != nil {
 		return nil, err
 	}
-	content, err := c.chat(ctx, distillPrompt, string(payload), true)
+	content, err := distiller.chat(ctx, distillPrompt, string(payload), true)
 	if err != nil {
 		return nil, err
 	}
