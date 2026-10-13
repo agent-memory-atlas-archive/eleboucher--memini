@@ -12,8 +12,8 @@ import (
 // inputs here are always ancestorsOf output, which never carries a trailing
 // slash or empty segments, so the simpler form is sufficient.
 func lastSegment(p string) string {
-	if i := strings.LastIndexByte(p, '/'); i >= 0 {
-		return p[i+1:]
+	if _, segment, found := strings.CutLast(p, "/"); found {
+		return segment
 	}
 	return p
 }

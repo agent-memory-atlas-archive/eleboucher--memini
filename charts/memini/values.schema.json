@@ -40,7 +40,7 @@
     "controllers": {
       "properties": {
         "fsck": {
-          "description": "Periodic fsck CronJob. Disabled by default — the in-process sweeper\nalready handles decay. If enabled, the container needs MEMINI_API_KEY in env\nand uses curl's --variable/--expand-header so the token never lands in argv.",
+          "description": "Periodic fsck CronJob. Disabled by default — the in-process sweeper\nalready handles decay. If enabled, the container needs MEMINI_API_KEY in env\nand pipes the bearer header to curl so the token never lands in curl's argv.",
           "properties": {
             "containers": {
               "properties": {
@@ -680,17 +680,31 @@
       "title": "controllers",
       "type": "object"
     },
+    "defaultExternalSecretStoreRef": {
+      "description": "Default SecretStore or ClusterSecretStore reference for ExternalSecret\nobjects.",
+      "properties": {
+        "name": {
+          "default": "",
+          "description": "(string) Kind of the SecretStore resource.\nkind:\nName of the SecretStore resource.",
+          "title": "name",
+          "type": "string"
+        }
+      },
+      "required": [],
+      "title": "defaultExternalSecretStoreRef",
+      "type": "object"
+    },
     "defaultPodOptions": {
       "description": "Set default options for all controllers / pods here. Each of these options\ncan be overridden on a controller level. Useful for setting node selectors,\ntolerations, security contexts, or service accounts that should apply to every\npod.",
       "properties": {
         "affinity": {
-          "description": "Set affinity constraint rules. Helm templates can be used. See\nhttps://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity",
+          "description": "Set affinity constraint rules. See\nhttps://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity",
           "required": [],
           "title": "affinity",
           "type": "object"
         },
         "annotations": {
-          "description": "Describes node affinity scheduling rules for the pod.\nnodeAffinity: {}\nThe scheduler will prefer to schedule pods to nodes that satisfy the\naffinity expressions specified by this field, but it may choose a node that\nviolates one or more of the expressions. The node that is most preferred is\nthe one with the greatest sum of weights, i.e. for each node that meets all of\nthe scheduling requirements (resource request, requiredDuringScheduling\naffinity expressions, etc.), compute a sum by iterating through the elements\nof this field and adding \"weight\" to the sum if the node matches the\ncorresponding matchExpressions; the node(s) with the highest sum are the most\npreferred.\npreferredDuringSchedulingIgnoredDuringExecution: []\nIf the affinity requirements specified by this field are not met at\nscheduling time, the pod will not be scheduled onto the node. If the affinity\nrequirements specified by this field cease to be met at some point during pod\nexecution (e.g. due to an update), the system may or may not try to eventually\nevict the pod from its node.\nrequiredDuringSchedulingIgnoredDuringExecution: {}\nRequired. A list of node selector terms. The terms are ORed.\nnodeSelectorTerms: []\nDescribes pod affinity scheduling rules (e.g. co-locate this pod in the\nsame node, zone, etc. as some other pod(s)).\npodAffinity: {}\nThe scheduler will prefer to schedule pods to nodes that satisfy the\naffinity expressions specified by this field, but it may choose a node that\nviolates one or more of the expressions. The node that is most preferred is\nthe one with the greatest sum of weights, i.e. for each node that meets all of\nthe scheduling requirements (resource request, requiredDuringScheduling\naffinity expressions, etc.), compute a sum by iterating through the elements\nof this field and adding \"weight\" to the sum if the node has pods which\nmatches the corresponding podAffinityTerm; the node(s) with the highest sum\nare the most preferred.\npreferredDuringSchedulingIgnoredDuringExecution: []\nIf the affinity requirements specified by this field are not met at\nscheduling time, the pod will not be scheduled onto the node. If the affinity\nrequirements specified by this field cease to be met at some point during pod\nexecution (e.g. due to a pod label update), the system may or may not try to\neventually evict the pod from its node. When there are multiple elements, the\nlists of nodes corresponding to each podAffinityTerm are intersected, i.e. all\nterms must be satisfied.\nrequiredDuringSchedulingIgnoredDuringExecution: []\nDescribes pod anti-affinity scheduling rules (e.g. avoid putting this pod\nin the same node, zone, etc. as some other pod(s)).\npodAntiAffinity: {}\nThe scheduler will prefer to schedule pods to nodes that satisfy the\nanti-affinity expressions specified by this field, but it may choose a node\nthat violates one or more of the expressions. The node that is most preferred\nis the one with the greatest sum of weights, i.e. for each node that meets all\nof the scheduling requirements (resource request, requiredDuringScheduling\nanti-affinity expressions, etc.), compute a sum by iterating through the\nelements of this field and adding \"weight\" to the sum if the node has pods\nwhich matches the corresponding podAffinityTerm; the node(s) with the highest\nsum are the most preferred.\npreferredDuringSchedulingIgnoredDuringExecution: []\nIf the anti-affinity requirements specified by this field are not met at\nscheduling time, the pod will not be scheduled onto the node. If the\nanti-affinity requirements specified by this field cease to be met at some\npoint during pod execution (e.g. due to a pod label update), the system may or\nmay not try to eventually evict the pod from its node. When there are multiple\nelements, the lists of nodes corresponding to each podAffinityTerm are\nintersected, i.e. all terms must be satisfied.\nrequiredDuringSchedulingIgnoredDuringExecution: []\nAnnotations to set on the item.",
+          "description": "Describes node affinity scheduling rules for the pod.\nnodeAffinity: {}\nThe scheduler will prefer to schedule pods to nodes that satisfy the\naffinity expressions specified by this field, but it may choose a node that\nviolates one or more of the expressions. The node that is most preferred is\nthe one with the greatest sum of weights, i.e. for each node that meets all of\nthe scheduling requirements (resource request, requiredDuringScheduling\naffinity expressions, etc.), compute a sum by iterating through the elements\nof this field and adding \"weight\" to the sum if the node matches the\ncorresponding matchExpressions; the node(s) with the highest sum are the most\npreferred.\npreferredDuringSchedulingIgnoredDuringExecution: []\nIf the affinity requirements specified by this field are not met at\nscheduling time, the pod will not be scheduled onto the node. If the affinity\nrequirements specified by this field cease to be met at some point during pod\nexecution (e.g. due to an update), the system may or may not try to eventually\nevict the pod from its node.\nrequiredDuringSchedulingIgnoredDuringExecution: {}\nRequired. A list of node selector terms. The terms are ORed.\nnodeSelectorTerms: []\nDescribes pod affinity scheduling rules (e.g. co-locate this pod in the\nsame node, zone, etc. as some other pod(s)).\npodAffinity: {}\nThe scheduler will prefer to schedule pods to nodes that satisfy the\naffinity expressions specified by this field, but it may choose a node that\nviolates one or more of the expressions. The node that is most preferred is\nthe one with the greatest sum of weights, i.e. for each node that meets all of\nthe scheduling requirements (resource request, requiredDuringScheduling\naffinity expressions, etc.), compute a sum by iterating through the elements\nof this field and adding \"weight\" to the sum if the node has pods which\nmatches the corresponding podAffinityTerm; the node(s) with the highest sum\nare the most preferred.\npreferredDuringSchedulingIgnoredDuringExecution: []\nIf the affinity requirements specified by this field are not met at\nscheduling time, the pod will not be scheduled onto the node. If the affinity\nrequirements specified by this field cease to be met at some point during pod\nexecution (e.g. due to a pod label update), the system may or may not try to\neventually evict the pod from its node. When there are multiple elements, the\nlists of nodes corresponding to each podAffinityTerm are intersected, i.e. all\nterms must be satisfied.\nrequiredDuringSchedulingIgnoredDuringExecution: []\nDescribes pod anti-affinity scheduling rules (e.g. avoid putting this pod\nin the same node, zone, etc. as some other pod(s)).\npodAntiAffinity: {}\nThe scheduler will prefer to schedule pods to nodes that satisfy the\nanti-affinity expressions specified by this field, but it may choose a node\nthat violates one or more of the expressions. The node that is most preferred\nis the one with the greatest sum of weights, i.e. for each node that meets all\nof the scheduling requirements (resource request, requiredDuringScheduling\nanti-affinity expressions, etc.), compute a sum by iterating through the\nelements of this field and adding \"weight\" to the sum if the node has pods\nwhich matches the corresponding podAffinityTerm; the node(s) with the highest\nsum are the most preferred.\npreferredDuringSchedulingIgnoredDuringExecution: []\nIf the anti-affinity requirements specified by this field are not met at\nscheduling time, the pod will not be scheduled onto the node. If the\nanti-affinity requirements specified by this field cease to be met at some\npoint during pod execution (e.g. due to a pod label update), the system may or\nmay not try to eventually evict the pod from its node. When there are multiple\nelements, the lists of nodes corresponding to each podAffinityTerm are\nintersected, i.e. all terms must be satisfied.\nrequiredDuringSchedulingIgnoredDuringExecution: []\nAnnotations to set on the item. Keys and values support Helm templating.",
           "required": [],
           "title": "annotations",
           "type": "object"
@@ -754,7 +768,7 @@
           "type": "array"
         },
         "labels": {
-          "description": "Labels to set on the item.",
+          "description": "Labels to set on the item. Keys and values support Helm templating.",
           "required": [],
           "title": "labels",
           "type": "object"
@@ -840,6 +854,12 @@
       "title": "defaultPodOptionsStrategy",
       "type": "string"
     },
+    "externalSecrets": {
+      "description": "ExternalSecret objects to be generated by the chart. Each key is an\nExternalSecret identifier.",
+      "required": [],
+      "title": "externalSecrets",
+      "type": "object"
+    },
     "global": {
       "description": "Global values are values that can be accessed from any chart or subchart by exactly the same name.",
       "required": [],
@@ -872,8 +892,40 @@
       "title": "ingress",
       "type": "object"
     },
+    "listenerSets": {
+      "description": "Kubernetes Gateway API ListenerSet objects to be generated by the chart.\nEach key is a ListenerSet identifier. Routes can attach to a ListenerSet by\nreferencing its identifier via the route parentRefs[].identifier key. See\nhttps://gateway-api.sigs.k8s.io/references/spec/ for the Gateway API\nspecification.",
+      "required": [],
+      "title": "listenerSets",
+      "type": "object"
+    },
+    "namespace": {
+      "description": "Configure the creation of the Helm release namespace.",
+      "properties": {
+        "annotations": {
+          "description": "Annotations to set on the item. Keys and values support Helm templating.",
+          "required": [],
+          "title": "annotations",
+          "type": "object"
+        },
+        "create": {
+          "default": false,
+          "description": "Set to true to create the Helm release namespace.",
+          "title": "create",
+          "type": "boolean"
+        },
+        "labels": {
+          "description": "Labels to set on the item. Keys and values support Helm templating.",
+          "required": [],
+          "title": "labels",
+          "type": "object"
+        }
+      },
+      "required": [],
+      "title": "namespace",
+      "type": "object"
+    },
     "networkpolicies": {
-      "description": "networkPolicy objects to be generated by the chart. Additional\nnetworkPolicies can be added by adding a dictionary key similar to the 'main'\nnetworkPolicy.",
+      "description": "  networkpolicies:\n    ciliumClusterwide:\n      type: ciliumClusterwide\n      nodeSelector:\n        matchLabels:\n          kubernetes.io/os: linux\n      ingress:\n        - fromEntities:\n            - cluster",
       "required": [],
       "title": "networkpolicies",
       "type": "object"
@@ -1084,7 +1136,7 @@
       "description": "Configure the Roles and Role Bindings for the chart here",
       "properties": {
         "bindings": {
-          "description": "Example entry - rename as needed\nmain:\nSet to false to disable the Role or ClusterRole.\nenabled: true\nSet the type of RBAC resource. Supported values: Role, ClusterRole.\ntype: Role\nAnnotations to set on the item.\nannotations: {}\nLabels to set on the item.\nlabels: {}\nSet the rules for the Role or ClusterRole.\nrules: []\n(string) Override the default resource name. Mutually exclusive with prefix\nand suffix.\nforceRename:\nPrefix to prepend to the resource name. Mutually exclusive with\nforceRename.\nprefix: \"\"\n(string) Suffix to append to the resource name. Defaults to the resource\nidentifier if there are multiple items, otherwise empty. Mutually exclusive\nwith forceRename.\nsuffix:\n(Cluster)RoleBinding objects to be generated by the chart",
+          "description": "Example entry - rename as needed\nmain:\nSet to false to disable the Role or ClusterRole.\nenabled: true\nSet the type of RBAC resource. Supported values: Role, ClusterRole.\ntype: Role\nAnnotations to set on the item. Keys and values support Helm templating.\nannotations: {}\nLabels to set on the item. Keys and values support Helm templating.\nlabels: {}\nSet the rules for the Role or ClusterRole.\nrules: []\n(string) Override the default resource name. Mutually exclusive with prefix\nand suffix.\nforceRename:\nPrefix to prepend to the resource name. Mutually exclusive with\nforceRename.\nprefix: \"\"\n(string) Suffix to append to the resource name. Defaults to the resource\nidentifier if there are multiple items, otherwise empty. Mutually exclusive\nwith forceRename.\nsuffix:\n(Cluster)RoleBinding objects to be generated by the chart",
           "required": [],
           "title": "bindings",
           "type": "object"

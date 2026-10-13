@@ -220,7 +220,7 @@ controllers:
 
   # -- Periodic fsck CronJob. Disabled by default — the in-process sweeper
   # already handles decay. If enabled, the container needs MEMINI_API_KEY in env
-  # and uses curl's --variable/--expand-header so the token never lands in argv.
+  # and pipes the bearer header to curl so the token never lands in curl's argv.
   fsck:
     enabled: false
     type: cronjob
@@ -259,7 +259,7 @@ controllers:
           - /bin/sh
           - -c
           - >-
-            curl -sf -X POST --variable "MEMINI_API_KEY=$MEMINI_API_KEY" --expand-header "Authorization: Bearer {{MEMINI_API_KEY}}" "$MEMINI_URL/v1/fsck"
+            printf '%s' "Authorization: Bearer $MEMINI_API_KEY" | curl -sf -X POST --header @- "$MEMINI_URL/v1/fsck"
         env:
           POD_NAMESPACE:
             valueFrom:

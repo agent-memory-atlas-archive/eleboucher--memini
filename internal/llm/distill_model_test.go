@@ -39,9 +39,9 @@ func TestDistillModelRouting(t *testing.T) {
 					w.Header().Set("Content-Type", "application/json")
 					content, _ := json.Marshal(`{"facts":[],"action":"new"}`)
 					if api == llm.APIAnthropic {
-						fmt.Fprintf(w, `{"id":"msg_1","type":"message","role":"assistant","model":"m","content":[{"type":"text","text":%s}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}}`, content)
+						_, _ = fmt.Fprintf(w, `{"id":"msg_1","type":"message","role":"assistant","model":"m","content":[{"type":"text","text":%s}],"stop_reason":"end_turn","usage":{"input_tokens":1,"output_tokens":1}}`, content)
 					} else {
-						fmt.Fprintf(w, `{"choices":[{"message":{"role":"assistant","content":%s}}]}`, content)
+						_, _ = fmt.Fprintf(w, `{"choices":[{"message":{"role":"assistant","content":%s}}]}`, content)
 					}
 				}))
 				defer srv.Close()

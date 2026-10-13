@@ -127,17 +127,17 @@ func MigrateScopes(ctx context.Context, st store.Store, opts ScopesOptions) (Sco
 // When it is, seg is that segment and parent is everything before it (empty
 // for a bare top-level "_shared").
 func splitShared(ns string) (seg, parent string, ok bool) {
-	i := strings.LastIndex(ns, "/")
-	if i < 0 {
+	parentPath, segment, found := strings.CutLast(ns, "/")
+	if !found {
 		if ns == sharedSegment {
 			return ns, "", true
 		}
 		return "", "", false
 	}
-	if ns[i+1:] != sharedSegment {
+	if segment != sharedSegment {
 		return "", "", false
 	}
-	return ns, ns[:i], true
+	return ns, parentPath, true
 }
 
 // mergeShared moves every memory from the "<parent>/_shared" namespace into
