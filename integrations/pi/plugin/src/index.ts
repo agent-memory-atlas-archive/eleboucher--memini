@@ -1865,6 +1865,9 @@ export default function meminiExtension(pi: ExtensionAPI): void {
   };
 
   pi.on("before_agent_start", async (event, ctx) => {
+    // Pi 1.x also starts runs from custom messages, which have no user prompt.
+    // Keep the property guard compatible with older hosts' prompt-only events.
+    if (!("prompt" in event)) return;
     const sid = sessionIdOf(ctx);
     const live = await sessionLive(sessionCtx);
     // Count literal prompts before every shape/recall gate. With dedupe disabled,

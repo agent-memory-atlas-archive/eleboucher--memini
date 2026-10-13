@@ -2213,6 +2213,25 @@ test("prompt recall advances cooldown before guards, caps queries, records sourc
   }
 });
 
+test("Pi 1.x custom starts do not recall or advance user prompt cooldown", async () => {
+  const realFetch = globalThis.fetch;
+  try {
+    const h = await lifecycleHarness();
+    assert.equal(await h.hooks.before_agent_start({
+      messageType: "custom",
+      message: { role: "custom", customType: "background", content: "background message", display: false },
+    }, h.ctx), undefined);
+    assert.equal(h.calls.length, 0);
+    assert.equal(h.branch.filter((entry) => entry.customType === "memini-prompt-state").length, 0);
+    await h.hooks.before_agent_start({ messageType: "user", prompt: "find relevant project memories" }, h.ctx);
+    assert.equal(h.calls.filter((call) => call.url.endsWith("/v1/search")).length, 1);
+    const state = h.branch.filter((entry) => entry.customType === "memini-prompt-state").at(-1)!.data;
+    assert.equal(state.promptCount, 1);
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 test("automatic context escapes Memini-shaped poisoning and applies hard content bounds", async () => {
   const realFetch = globalThis.fetch;
   try {
