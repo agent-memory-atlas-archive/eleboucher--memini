@@ -45,6 +45,7 @@ server deployment. Treat the rest as tuning you reach for when you have a reason
 | [`MEMINI_EMBED_MODEL_ALIASES`](#memini_embed_model_aliases) | none | [Embeddings](#embeddings) |
 | [`MEMINI_EMBED_DIMS`](#memini_embed_dims) | `1536` | [Embeddings](#embeddings) |
 | [`MEMINI_EMBED_QUERY_PREFIX`](#memini_embed_query_prefix) | none | [Embeddings](#embeddings) |
+| [`MEMINI_EMBED_DOC_PREFIX`](#memini_embed_doc_prefix) | none | [Embeddings](#embeddings) |
 | [`MEMINI_EMBED_MAX_BATCH`](#memini_embed_max_batch) | `20` | [Embeddings](#embeddings) |
 | [`MEMINI_EMBED_MAX_BATCH_CHARS`](#memini_embed_max_batch_chars) | `24000` | [Embeddings](#embeddings) |
 | [`MEMINI_EMBED_MAX_ITEM_CHARS`](#memini_embed_max_item_chars) | `8000` | [Embeddings](#embeddings) |
@@ -245,7 +246,13 @@ int, default `1536`. Set by `Config.EmbedDims`.
 
 string, default none. Set by `Config.EmbedQueryPrefix`.
 
-`MEMINI_EMBED_QUERY_PREFIX` is prepended to recall queries before embedding, for instruction-tuned asymmetric embedders (e.g. Qwen3-Embedding, bge). Documents are always embedded without it. Empty disables.
+`MEMINI_EMBED_QUERY_PREFIX` is prepended to recall queries before embedding, for instruction-tuned asymmetric embedders (e.g. Qwen3-Embedding, bge). Documents use `MEMINI_EMBED_DOC_PREFIX` instead. Empty disables.
+
+### `MEMINI_EMBED_DOC_PREFIX`
+
+string, default none. Set by `Config.EmbedDocPrefix`.
+
+`MEMINI_EMBED_DOC_PREFIX` is prepended to documents before embedding, including chunks, backfill and re-embedding, for models requiring a document instruction. Recall queries use `MEMINI_EMBED_QUERY_PREFIX` instead. Empty disables. After changing this value, run memini reembed --yes to rebuild existing vectors.
 
 ### `MEMINI_EMBED_MAX_BATCH`
 

@@ -316,6 +316,38 @@ func TestRecallQueryPrefix(t *testing.T) {
 	}
 }
 
+func TestRecallDocumentAndQueryPrefixes(t *testing.T) {
+	ctx := context.Background()
+	st, err := sqlitevec.Open(ctx, filepath.Join(t.TempDir(), "svc.db"), dims)
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	t.Cleanup(func() { _ = st.Close() })
+	rec := &recordingEmbedder{Embedder: embedtest.New(dims)}
+	svc := service.New(st, embed.WithDocumentPrefix(rec, "document: "),
+		service.WithSyncReinforce(),
+		service.WithQueryPrefix("Instruct: retrieve\nQuery: "),
+	)
+
+	// Document and query instructions stay separate.
+	if _, err := svc.Remember(ctx, service.RememberInput{Namespace: "alice", Content: "hello world"}); err != nil {
+		t.Fatalf("remember: %v", err)
+	}
+	if _, err := svc.Recall(ctx, service.RecallInput{Namespace: "alice", Query: "hello", Limit: 1}); err != nil {
+		t.Fatalf("recall: %v", err)
+	}
+
+	want := []string{"document: hello world", "Instruct: retrieve\nQuery: hello"}
+	if len(rec.texts) != len(want) {
+		t.Fatalf("embedded texts = %q, want %q", rec.texts, want)
+	}
+	for i := range want {
+		if rec.texts[i] != want[i] {
+			t.Errorf("embedded[%d] = %q, want %q", i, rec.texts[i], want[i])
+		}
+	}
+}
+
 // TestRememberReportsReinforcedWhenNothingWasWritten pins the honesty contract on
 // the two paths where Remember returns a memory the caller did NOT write.
 //

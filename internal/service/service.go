@@ -2413,7 +2413,7 @@ func (s *Service) Recall(ctx context.Context, in RecallInput) ([]store.Scored, e
 			ectx, cancel = context.WithTimeout(g1ctx, s.recallEmbedTimeout)
 			defer cancel()
 		}
-		v, err := embed.EmbedOne(ectx, s.embedder, s.queryPrefix+in.Query)
+		v, err := embed.EmbedQueryOne(ectx, s.embedder, s.queryPrefix+in.Query)
 		if err != nil {
 			// With an embed budget set, recall is best-effort: capture the error
 			// and degrade to keyword-only rather than aborting the group.

@@ -1136,6 +1136,7 @@ test("chat.message caps the recall block by MEMINI_INJECT_RECALL_MAX_TOK", async
     assert.equal(output.parts.length, 2, "synthetic part should be unshifted");
     const injected = output.parts[0];
     assert.equal(injected.synthetic, true);
+    assert.match(injected.id, /^prt_[0-9a-f-]{36}$/);
     assert.match(injected.text, /\[\.\.\. \d+ item\(s\) truncated by token budget\]/);
     assert.ok(injected.text.includes("bullet number 0"));
     assert.ok(!injected.text.includes("bullet number 3"));

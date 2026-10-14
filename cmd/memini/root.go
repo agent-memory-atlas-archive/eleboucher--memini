@@ -666,7 +666,11 @@ func buildEmbedder(cfg *config.Config, log *slog.Logger, onInFlight func(n int64
 		log.Info("embed concurrency cap", "max_in_flight", cfg.EmbedMaxConcurrency)
 	}
 	batched := embed.NewBatched(limited, cfg.EmbedMaxBatch, cfg.EmbedMaxBatchChars, cfg.EmbedMaxItemChars)
-	return embed.NewCached(batched, 4096)
+	cached, err := embed.NewCached(batched, 4096)
+	if err != nil {
+		return nil, err
+	}
+	return embed.WithDocumentPrefix(cached, cfg.EmbedDocPrefix), nil
 }
 
 // Fixed internal defaults (no env override). The benchmark harness overrides the

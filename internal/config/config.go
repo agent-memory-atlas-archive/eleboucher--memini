@@ -161,8 +161,13 @@ type Config struct {
 	EmbedDims int `env:"MEMINI_EMBED_DIMS" envDefault:"1536"`
 	// EmbedQueryPrefix is prepended to recall queries before embedding, for
 	// instruction-tuned asymmetric embedders (e.g. Qwen3-Embedding, bge).
-	// Documents are always embedded without it. Empty disables.
+	// Documents use EmbedDocPrefix instead. Empty disables.
 	EmbedQueryPrefix string `env:"MEMINI_EMBED_QUERY_PREFIX"`
+	// EmbedDocPrefix is prepended to documents before embedding, including chunks,
+	// backfill and re-embedding, for models requiring a document instruction.
+	// Recall queries use EmbedQueryPrefix instead. Empty disables. After changing
+	// this value, run memini reembed --yes to rebuild existing vectors.
+	EmbedDocPrefix string `env:"MEMINI_EMBED_DOC_PREFIX"`
 	// EmbedMaxBatch caps items per /embeddings request so bulk callers (dedup
 	// over a whole namespace) can't exceed the server's max client batch and
 	// fail with 422. The TEI default is 32; 20 leaves headroom.

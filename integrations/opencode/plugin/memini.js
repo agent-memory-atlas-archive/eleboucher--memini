@@ -20,7 +20,7 @@
  */
 
 import { execSync, spawnSync } from "node:child_process";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { readFileSync, existsSync, rmSync, writeFileSync, statSync } from "node:fs";
 import { resolve, join, dirname } from "node:path";
 import { homedir } from "node:os";
@@ -1492,7 +1492,7 @@ export const MeminiPlugin = async ({ client, worktree, directory }, options) => 
       });
       // opencode's part schema requires ids to start with `prt`.
       output.parts.unshift({
-        id: `prt_${crypto.randomUUID()}`,
+        id: `prt_${randomUUID()}`,
         sessionID,
         messageID,
         type: "text",
